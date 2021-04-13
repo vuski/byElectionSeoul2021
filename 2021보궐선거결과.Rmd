@@ -1,0 +1,79 @@
+---
+title: "R Notebook"
+output: html_notebook
+---
+
+This is an [R Markdown](http://rmarkdown.rstudio.com) Notebook. When you execute code within the notebook, the results appear beneath the code. 
+
+Try executing this chunk by clicking the *Run* button within the chunk or by placing your cursor inside it and pressing *Ctrl+Shift+Enter*. 
+
+```{r, fig.width = 12, fig.height = 7}
+library(foreach)
+library(tidyverse)
+library(data.table)
+library(reshape2)
+library(scales)
+library(ggrepel)
+
+workFolder <- "A:\\work\\202104_보궐선거결과\\"
+
+system.time(rawdata <- fread(paste0(workFolder,"아파트실거래매매_20200401_20210331.tsv"),
+                            select = c(1,4,7,11), 
+                            colClasses = list(character = 1, numeric=4:7, character = 11),
+                            sep = "\t", header = TRUE, stringsAsFactors = FALSE, nThread = 16
+                            )
+            )
+
+
+data <- rawdata %>% filter(EXPIRED =="")
+
+
+system.time(pnu <- fread( paste0(workFolder,"pnu행정동.tsv"),
+                            colClasses = c( 'character', 'character'),
+                            sep = "\t", header = TRUE, stringsAsFactors = FALSE, nThread = 16
+                            )
+)
+            
+
+
+
+system.time(pyo <- fread( paste0(workFolder,"행정동별오세훈득표율.tsv"),
+                            select = c(7,8,11), 
+                            colClasses = list(character = 8:10, numeric=11),
+                            col.names = c('EMD','SGG','OhRatio'),
+                            sep = "\t", header = TRUE, stringsAsFactors = FALSE, nThread = 16
+                            )
+)
+       
+
+
+data <- data %>% left_join(pnu, by="PNU")
+data <- data %>%  left_join(pyo, by="EMD")
+data <- data %>% select(PNU, AREA, PRICE, EMD, OhRatio) 
+
+data00 <- data %>% group_by(EMD, OhRatio) %>%
+  summarise(.groups="keep", avg = mean(PRICE))
+
+
+
+ggplot(data = data00, mapping = aes(x=avg/10000, y=OhRatio,label = EMD))+
+  geom_point(size=3, alpha = 0.5) +
+  #geom_text_repel(
+    #colour = "#2299aa",
+    #nudge_x = 10, nudge_y = 0, 
+  #  check_overlap = TRUE,
+  #  size = 2
+  #) +
+  labs(x="행정동별 1년간 아파트 실거래가(매매) 평균 가격(억원)", y="오세훈 득표율") +
+  theme_bw()+
+  theme(strip.text = element_text(size=15),
+        plot.title = element_text(size=15),
+        legend.title = element_blank(),
+        axis.text.x = element_text(size=12,angle=0, hjust=1),
+        axis.text.y = element_text(size=12,hjust=1))
+
+ggsave(paste0(workFolder,"결과.png"),
+     antialias = "default", width = 240, height = 140, unit = c("mm"), dpi = 200)
+
+```
+
