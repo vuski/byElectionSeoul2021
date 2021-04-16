@@ -761,7 +761,7 @@
                 function mouseoutE(d) {
                     d3.select(this)
                         .attr("r", 2)
-                    .attr("opacity", 0.1);
+                    .attr("opacity", 0.6);
 
                     gB.selectAll(".cir").filter(function (f) {
                         if (d.id == f.id) return true;
@@ -790,7 +790,7 @@
                 function mouseoutM(d) {
                     d3.select(this)
                         .attr("r", 2 * Math.pow(zoomParameter, 0.4))
-                    .attr("opacity", 0.1);
+                    .attr("opacity", 0.6);
 
                     gE.selectAll(".cirE").filter(function (f) {
                         if (d.id == f.id) return true;
