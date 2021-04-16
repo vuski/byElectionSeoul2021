@@ -1,0 +1,1089 @@
+<!DOCTYPE html>
+<html lang="en">
+	<head>
+		<meta charset="utf-8">
+		<title>2015년 9월 서울 아파트 실거래가</title>
+      	<script src="d3.v3.min.js" charset="utf-8"></script>
+        <script type="text/javascript" src="2021.js"></script>
+        <script src="seoulGu.js"></script>
+
+        <meta name="viewport" content="width=device-width, height=device-height, user-scalable=no" />
+
+		<style type="text/css">
+
+		    html {
+		        min-height: 100% !important;
+		        width: 100%;
+		        height: 100%;
+		    }
+
+		    body {
+		        width: 100%;
+		        height: 100%;
+		        margin: 0;
+		    }
+
+
+		    #main_header {
+		        width: 100%;
+		        margin: 0 auto;
+		        height: 50px;
+		        position: relative;
+		        text-align: left;
+		        border-bottom: 2px solid black;
+		        background-color: #e0e0e0;
+                overflow : hidden;
+		    }
+
+		        #main_header > #title > txt {
+		            width: 500px;
+		            float: left;
+		            color: #353535;
+		            font-family: YDIYGO320, '08SeoulNamsan B',돋움체;
+		            font-size: 20px;
+		            line-height: 50px;
+		        }
+		        #main_header > #subtitle > txt {
+		       	    width: 450px;
+		            float: left;
+		            color: #353535;
+		            font-family: YDIYGO320, '08SeoulNamsan B',돋움체;
+		            font-size: 20px;
+		            line-height: 30px;
+		        }
+
+		    #wrap_middle {
+		        background-color: rgba(0,0,0,0.04);
+                height : 100%; 
+                margin-top : -50px;
+                padding-top : 50px;
+                overflow : hidden;
+                margin-bottom : -85px;
+		    }
+
+		        #wrap_middle > #map {
+		            float: left;
+		            width: 60%;
+                    height : 100%;
+		            border: 1px solid #e0e0e0;
+		            margin: auto;
+		            float: left;
+		            background-color: white;
+                    
+		        }
+
+		        #wrap_middle > #right_aside {
+		            float: right;
+		            width: 40%;
+                    height : 100%;
+                    margin-left : -4px;
+                    padding-left : 2px;
+		        }
+
+		            #wrap_middle > #right_aside > #enlargedMap {
+		                background-color: white;
+		                height: 50%;
+                        border: 1px solid #e0e0e0;
+		            }
+		            #wrap_middle > #right_aside > #miniMap {
+		                background-color:  white;
+		                height: 50%;
+                        border: 1px solid #e0e0e0;
+		            }
+
+		    .control_input {
+                
+                padding-left : 10px;
+                padding-top : 5px;
+                margin-bottom : -5px;
+                overflow : hidden;
+		    }
+
+
+
+			.axis path, .axis line   {
+				fill: none;
+				stroke: black;
+				shape-rendering: crispEdges;
+			}
+			
+            .axisE path, .axisE line {
+				fill: none;
+				stroke: #e0e0e0;
+				shape-rendering: crispEdges;
+			}
+
+			.axis text,
+            .axisE text {
+				font-family: sans-serif;
+				font-size: 11px;
+                rotation : 45deg;
+			}
+
+		    .brush .extent {
+		        stroke: #fff;
+                
+		        fill-opacity: .3;
+		        shape-rendering: crispEdges;
+		    }
+
+		    .cirE {
+                stroke : black;
+                
+                stroke-width : 0.5px;
+                
+		    }
+            
+		    .miniMap {
+		        
+		    }
+
+             .miniMap.selected {
+                 fill : white;
+                stroke : black;
+                stroke-opacity : 0.4;
+                stroke-width : 0.5px;
+		    }
+		    .borderGu {
+		        fill: #e0ebcb;
+		        stroke: white;
+		    }
+            .borderSi {
+                fill: none;
+                stroke : #e0e0e0;
+                
+		    } 
+
+		</style>
+        <script type="text/javascript">
+
+            window.onload = function () {
+
+                //Width and height
+                var w = window,
+                    d = document,
+                    e = d.documentElement,
+                    g = d.getElementsByTagName('body')[0],
+                    w = w.innerWidth || e.clientWidth || g.clientWidth,
+                    h = w.innerHeight || e.clientHeight || g.clientHeight;
+                var wS = (w * 0.4) - 2, hS = (h - 50) * 0.5 - 2;
+                var wE = (w * 0.4) - 2, hE = (h) * 0.5 - 2;
+                var wM = (w * 0.6) - 2, hM = (h - 50) - 2;
+                var padding = 30;
+                //console.log(w+","+h);
+
+
+                var arrayIndicator = 0;
+
+                var data = new Array();
+                var priceArray = new Array();
+                function Data(id, gu, size, price, lng, lat, name) {
+                    this.id = id;
+                    this.gu = gu;
+                    this.size = size;
+                    this.price = price;
+                    this.lng = lng;
+                    this.lat = lat;
+                    this.name = name;
+
+                }
+                var o = arrayIndicator;
+
+                for (var i = 0; i < dataset[o].length; i++) {
+
+                    data.push(new Data(dataset[o][i][0], dataset[o][i][1], dataset[o][i][2], dataset[o][i][3], dataset[o][i][4], dataset[o][i][5], dataset[o][i][6]));
+                    priceArray.push(dataset[o][i][3]);
+                }
+                var max = Math.max.apply(null, priceArray);
+                var min = Math.min.apply(null, priceArray);
+
+                var projection = d3.geo.mercator()
+                        .center([126.980810, 37.532964])
+                        .scale(80000)
+                        //.clipAngle(90)
+                        .translate([wM / 2, hM / 2]);
+
+
+                var gM, gB, gE, gT;
+
+                drawEnlargedGraphFirst = true;
+                var svg = d3.select("#miniMap")
+                                .append("svg")
+                                .attr("width", wS)
+                                .attr("height", hS);
+                var svgE = d3.select("#enlargedMap").append("svg")
+                            .attr("width", wE)
+                            .attr("height", hE);
+
+                var svgM = d3.select("#map").append("svg")
+                    .attr("width", wM)
+                    .attr("height", hM);
+
+                gX = svg.append("g").attr("class", "x axis");
+                gY = svg.append("g").attr("class", "y axis");
+
+                gT = svg.append("g").attr("class", "textB");
+                gT1 = gT.append("text").attr("class", "extent");
+                gT2 = gT.append("text").attr("class", "ratio");
+                gTP = gT.append("path").attr("class", "infoPath");
+                gTC = gT.append("circle").attr("class", "subCir");
+
+                gEX = svgE.append("g").attr("class", "x axisE");
+                gEY = svgE.append("g").attr("class", "y axisE");
+                gED = svgE.append("g").attr("class", "xyDummy");
+                gE = svgE.append("g").attr("class", "someDots");
+                gET = svgE.append("text").attr("class", "name");
+
+
+
+                gMB = svgM.append("g").attr("class", "wholeMap");
+                gM = gMB.append("g").attr("class", "bkMap");
+                gB = gMB.append("g").attr("class", "bubble");
+                gMB.attr("transform", "translate(" + 0 + "," + 0 + ")");
+                gMG = gMB.append("g").attr("class", "seoulGu");
+                gMT = gMB.append("g").attr("class", "bubbleText")
+                    .append("text").attr("class", "textContents");
+
+                var xScaleM = d3.scale.linear()
+                        .domain([0, wM])
+                         .range([0, wM]);
+                var yScaleM = d3.scale.linear()
+                        .domain([0, hM])
+                       .range([0, hM]);
+
+                var zoomer = d3.behavior.zoom()
+                    .x(xScaleM)
+                    .y(yScaleM)
+                    .scale(1)
+                    .scaleExtent([0.5, 50]).on("zoom", zoom);
+
+
+                var zoomParameter = 1;
+
+                svgM.call(zoomer); //이것은 단지 어느 영역에 zoom을 활성화 시킬 것인지만 정의.
+
+                var path = d3.geo.path().projection(projection);
+
+                function zoom() {
+
+                    zoomParameter = zoomer.scale();
+                    gM.attr("transform", "translate(" + d3.event.translate + ")scale(" + d3.event.scale + ")"); //지도는 path로 그려지기 때문에 "g"에 translate와 scale attribute로 조정하는게 맞고, 나머지는 직접 컨트롤. 그래야, 굵기 크기 등을 적절히 컨트롤 가능하다.
+
+                    gM.selectAll(".borderGu").style("stroke-width", 3 / zoomParameter);
+
+                    gB.selectAll(".cir")
+                        .attr("cx", function (d) { return xScaleM(projection([d.lng, d.lat])[0]); })
+                        .attr("cy", function (d) { return yScaleM(projection([d.lng, d.lat])[1]); })
+                        .attr("r", 2 * Math.pow(zoomParameter, 0.4));
+                    gMG.selectAll(".guName")
+                        .attr("x", function (d) {
+                            return xScaleM(projection([(d.bbox[0] + d.bbox[2]) / 2, (d.bbox[1] + d.bbox[3]) / 2])[0] - 20);
+                        })
+                         .attr("y", function (d) {
+                             return yScaleM(projection([(d.bbox[0] + d.bbox[2]) / 2, (d.bbox[1] + d.bbox[3]) / 2])[1]);
+                         });
+
+
+                }
+
+
+
+                var brush;
+
+                var priceMax = d3.max(data, function (d) { return d.price; })+20000;
+                var sizeMax = d3.max(data, function (d) { return d.size; })+10;
+
+
+                var xScale = d3.scale.linear()
+                                         .domain([0, priceMax])
+                                         .range([padding, wS - padding / 2]);
+
+                var yScale = d3.scale.linear()
+                                     .domain([0, sizeMax])
+                                     .range([hS - padding * 2.5, padding / 2]);
+
+                var zoomerX, zoomerY;
+
+                var xScaleE, yScaleE;
+                var xAxisE, yAxisE;
+                var zoomXxOri, zoomYyOri;
+                var eZ;
+                var zoomXended = true, zoomYended = true;
+
+                function zoomXYstart() {
+                    zoomXstart();
+                    zoomYstart();
+                }
+                function zoomXY() {
+                    var temp = zoomerXY.scale();
+                    zoomerX.scale(temp);
+                    zoomX();
+                    zoomerY.scale(temp);
+                    zoomY();
+                }
+                function zoomXYend() {
+                    zoomXend();
+                    zoomYend();
+                }
+
+
+
+                function zoomXstart(d) {
+                    eZ = brush.extent(); //줌을 시작하면 그 때의 그래프 양측 한계점을 기록해둔다.
+                    var mouseOri = d3.mouse(svgE.node()); //마우스가 위치한 점의 좌표를 취한 후
+                    zoomXxOri = xScaleE.invert(mouseOri[0]); //invert 메서드로 마우스가 놓인 가격을 구한다.
+                    zoomXended = false;
+                }
+
+                function zoomX() {
+
+                    //wheel을 긁어 zoom in-out을 시도할 경우 zoomstart부터 인지되는 것이 아니라, zoom으로 바로 들어오게 된다.
+                    //따라서 eZ값을 읽어올 수 있도록 zoomXstart()를 호출한다. zoomXended값은 그 여부를 판별하기 위한 boolean 변수
+                    if (zoomXended) {
+                        zoomXended = true;
+                        zoomXstart();
+                    }
+
+                    var mouse = d3.mouse(svgE.node()); //줌이 살짝 진행된 후 마우스 위치를 취한다.
+                    var zoomXxDes = xScaleE.invert(mouse[0]); // 그 위치의 가격을 구하고
+                    var dx = zoomXxDes - zoomXxOri; //변위 차를 구한다.
+
+                    var eZ0 = eZ[0][0], eZ1 = eZ[1][0]; //temp 파일
+
+                    eZ[0][0] = ((eZ[0][0] - zoomXxOri) / zoomerX.scale()) + zoomXxOri - dx; //브러쉬에 적용시킬 새로운 한계점은 기존의 점에서 그 변위차만큼. eZ에 다시 저장해서 eZ값을 업데이트 해야 최초 start에서 변위만큼 조정된다.
+                    eZ[1][0] = ((eZ[1][0] - zoomXxOri) / zoomerX.scale()) + zoomXxOri - dx;
+
+                    //하한계선을 넘었을 때 처리
+                    if (eZ[0][0] < 0) {
+
+                        if (zoomerX.scale() != 1) {  //zoom때문에 넘었을 때
+                            eZ[0][0] = 0;
+                        } else { //pan 때문에 넘었을 때
+                            eZ[1][0] = eZ1 - eZ0;
+                            eZ[0][0] = 0;
+                        }
+                    }
+                    //상한계선을 넘었을 때 처리
+                    if (eZ[1][0] > priceMax) {
+
+                        if (zoomerX.scale() != 1) { //zoom때문에 넘었을 때
+                            eZ[1][0] = priceMax;
+                        } else { //pan 때문에 넘었을 때
+                            eZ[1][0] = priceMax;
+                            eZ[0][0] = eZ0 + (priceMax - eZ1);
+                        }
+                    }
+                    updateBrush(eZ);
+                }
+
+                function zoomXend() {
+                    zoomXended = true;
+                }
+
+                function zoomYstart(d) {
+                    eZ = brush.extent(); //줌을 시작하면 그 때의 그래프 위아래측 한계점을 기록해둔다.
+                    var mouseOri = d3.mouse(svgE.node()); //마우스가 위치한 점의 좌표를 취한 후
+                    zoomYyOri = yScaleE.invert(mouseOri[1]); //invert 메서드로 마우스가 놓인 면적을 구한다.
+                    zoomYended = false;
+                }
+
+                function zoomY() {
+
+                    if (zoomYended) {
+                        zoomYended = true;
+                        zoomYstart();
+                    }
+
+                    var mouse = d3.mouse(svgE.node()); //줌이 살짝 진행된 후 마우스 위치를 취한다.
+                    var zoomYyDes = yScaleE.invert(mouse[1]); // 그 위치의 면적을 구하고
+                    var dy = zoomYyDes - zoomYyOri; //변위 차를 구한다.
+                    var eZ0 = eZ[0][1], eZ1 = eZ[1][1]; //temp 파일
+                    eZ[0][1] = ((eZ[0][1] - zoomYyOri) / zoomerY.scale()) + zoomYyOri - dy; //브러쉬에 적용시킬 새로운 한계점은 기존의 점에서 그 변위차만큼. eZ에 다시 저장해서 eZ값을 업데이트 해야 최초 start에서 변위만큼 조정된다.
+                    eZ[1][1] = ((eZ[1][1] - zoomYyOri) / zoomerY.scale()) + zoomYyOri - dy;
+
+                    //하한계선을 넘었을 때 처리
+                    if (eZ[0][1] < 0) {
+
+                        if (zoomerY.scale() != 1) {  //zoom때문에 넘었을 때
+                            eZ[0][1] = 0;
+                        } else { //pan 때문에 넘었을 때
+                            eZ[1][1] = eZ1 - eZ0;
+                            eZ[0][1] = 0;
+                        }
+                    }
+                    //상한계선을 넘었을 때 처리
+                    if (eZ[1][1] > sizeMax) {
+
+                        if (zoomerY.scale() != 1) { //zoom때문에 넘었을 때
+                            eZ[1][1] = sizeMax;
+                        } else { //pan 때문에 넘었을 때
+                            eZ[1][1] = sizeMax;
+                            eZ[0][1] = eZ0 + (sizeMax - eZ1);
+                        }
+                    }
+                    updateBrush(eZ);
+                }
+
+                function zoomYend() {
+                    zoomYended = true;
+                }
+
+                drawBackgroundMap();
+
+                drawBasicGraph();  //확대 그래프 그리는 함수 호출은 이 안에 포함된다.
+
+                var brush = d3.svg.brush()
+                    .x(xScale)
+                    .y(yScale)
+                    .on("brushstart", brushstart)
+                    .on("brush", brushed)
+                    .on("brushend", brushend);
+
+                //사용자 입력이 먼저 되는 경우를 고려하여 extent입력해둔다.
+                brush.extent([[priceMax * 0.1, sizeMax * 0.2], [priceMax * 0.2, sizeMax * 0.4]]);
+                brushed();
+
+                //브러쉬를 나중에 그려야 화면에서 draw-order이 가장 위에 그려진다.
+                svg.append("g")
+                        .attr("class", "brush")
+                        .call(brush);
+
+
+
+
+                function drawBasicGraph() {
+
+                    //Define X axis
+                    var xAxis = d3.svg.axis()
+                                      .scale(xScale)
+                                      .orient("bottom")
+                                      .ticks(10);
+
+                    //Define Y axis
+                    var yAxis = d3.svg.axis()
+                                      .scale(yScale)
+                                      .orient("left")
+                                      .ticks(10);
+
+
+                    //Create circles
+                    var circle = svg.append("g").attr("class", "allDots").selectAll(".miniMap")
+                       .data(data)
+                       .enter()
+                       .append("circle")
+                        .attr("class", "miniMap")
+
+                       .attr("cx", function (d) {
+                           return xScale(d.price);
+                       })
+                       .attr("cy", function (d) {
+                           return yScale(d.size);
+                       })
+                       .attr("r", 2)
+                        .attr("opacity", 0.6)
+                    .style("fill", function (d) { return circleColor(d.price); });
+                    ;
+
+
+
+
+                    //Create X axis
+                    gX.attr("transform", "translate(0," + (hS - padding * 2.5) + ")")
+                        .call(xAxis);
+
+                    //Create Y axis
+                    gY.attr("transform", "translate(" + padding + ",0)")
+                        .call(yAxis);
+
+                } // drawBasicGraph
+
+                function drawEnlargedGraph(e, dataset2) {
+
+                    xScaleE = d3.scale.linear()
+                                        .domain([e[0][0], e[1][0]])
+                                        .range([padding, wE - padding / 2]);
+
+                    yScaleE = d3.scale.linear()
+                                         .domain([e[0][1], e[1][1]])
+                                         .range([hE - padding * 1.5, padding / 2]);
+
+                    //Define X axis
+                    xAxisE = d3.svg.axis()
+                                      .scale(xScaleE)
+                                      .orient("bottom")
+                                      .tickSize(-(hE - padding * 2))
+                                      .ticks(10);
+
+                    //Define Y axis
+                    yAxisE = d3.svg.axis()
+                                      .scale(yScaleE)
+                                      .orient("left")
+                                        .tickSize(-(wE - padding * 1.5))
+                                      .ticks(10);
+
+
+                    //축에 줌 생성
+                    zoomerX = d3.behavior.zoom()
+                                .scale(1)
+                                .scaleExtent([0.1, 10])
+                                .on("zoomstart", zoomXstart)
+                                .on("zoom", zoomX)
+                                .on("zoomend", zoomXend);
+
+                    zoomerY = d3.behavior.zoom()
+                                .scale(1)
+                                .scaleExtent([0.1, 10])
+                                .on("zoomstart", zoomYstart)
+                                .on("zoom", zoomY)
+                                .on("zoomend", zoomYend);
+
+                    zoomerXY = d3.behavior.zoom()
+                                .scale(1)
+                                .scaleExtent([0.1, 10])
+                                .on("zoomstart", zoomXYstart)
+                                .on("zoom", zoomXY)
+                                .on("zoomend", zoomXYend);
+
+                    svgE.select(".x.axisE").call(xAxisE);
+                    svgE.select(".y.axisE").call(yAxisE);
+
+                    if (drawEnlargedGraphFirst) {
+
+
+                        gEX.attr("transform", "translate(0," + (hE - padding * 1.5) + ")")
+                            .call(xAxisE);
+
+                        //Create Y axis
+                        gEY.attr("transform", "translate(" + padding + ",0)")
+                            .call(yAxisE);
+
+                        //zoom을 위한 더미
+                        gEX.append("g")
+                            .attr("class", "xDummy")
+                            .attr("transform", "translate(" + padding + ",0)")
+                            .append("rect")
+                            .attr("width", wE - padding * 1.5)
+                            .attr("height", 20)
+                            .attr("opacity", 0)
+                            .call(zoomerX);
+
+                        gEY.append("g")
+                            .attr("class", "xDummy")
+                            .attr("transform", "translate(" + (-padding) + "," + (padding / 2) + ")")
+                            .append("rect")
+                            .attr("width", 30)
+                            .attr("height", hE - padding * 2)
+                            .attr("opacity", 0)
+                            .call(zoomerY);
+
+                        gED
+                            .attr("transform", "translate(" + (padding) + "," + (padding / 2) + ")")
+                            .append("rect")
+                            .attr("width", wE - padding * 1.5)
+                            .attr("height", hE - padding * 2)
+                            .attr("opacity", 0)
+                            .call(zoomerXY)
+                        ;
+
+                        drawEnlargedGraphFirst = false;
+
+                    }
+
+                    var circleData = gE.selectAll(".cirE")
+                        .data(dataset2, function (d) { return d.id; });
+
+                    var circlePrevious = circleData
+                         .attr("cx", function (d) {
+                             return xScaleE(d.price);
+                         })
+                       .attr("cy", function (d) {
+                           return yScaleE(d.size);
+                       });
+
+
+
+
+                    circleData.enter()
+                        .append("circle")
+                        .attr("class", "cirE")
+                         .attr("cx", function (d) {
+                             return xScaleE(d.price);
+                         })
+                       .attr("cy", function (d) {
+                           return yScaleE(d.size);
+                       })
+                       .attr("r", 2)
+                        .attr("opacity", 0.6)
+                        .attr("fill", function (d) { return circleColor(d.price); })
+                        .attr("stroke-opacity", 0.4)
+                        .on("mouseover", mouseoverE)
+                        .on("mouseout", mouseoutE)
+                        .call(zoomerXY)
+                    ;
+
+                    circleData.exit().remove();
+
+
+
+
+
+
+                }
+
+                function drawBackgroundMap() {
+
+
+
+
+                    //bounds 뽑아내는 부분.
+                    var bounds = path.bounds(seoulAll),  //path.bounds는 geoJSON의 도형들의 바운더리를 만들어 줌
+                         topLeft = bounds[0],
+                         bottomRight = bounds[1];
+
+
+                    var feature = gM.selectAll("path")
+                       .data(seoulAll.features, function (d) { return d.geometry.coordinates; })
+                        .attr("d", path) //update - 이 부분을 지우면 줌 할때 못따라감.
+                        .enter().append("path");
+
+
+                    feature.attr("class", function (d) {
+                        if (d.ctgry == "si") return "borderSi";
+                        else if (d.ctgry == "gu") return "borderGu";
+                    })
+                        .attr("d", path)
+                       .attr("stroke-width", 3);
+
+
+                    gMG.selectAll(".guName")
+                            .data(seoulAll.features)
+                            .enter().append("text")
+                            .attr("class", "guName")
+                            .text(function (d) {
+                                return d.properties.area2;
+                            })
+                            .attr("x", function (d) {
+                                return xScaleM(projection([(d.bbox[0] + d.bbox[2]) / 2, (d.bbox[1] + d.bbox[3]) / 2])[0] - 20);
+
+                            })
+                            .attr("y", function (d) {
+                                return yScaleM(projection([(d.bbox[0] + d.bbox[2]) / 2, (d.bbox[1] + d.bbox[3]) / 2])[1]);
+                            })
+                            .attr("font-family", "맑은 고딕")
+                            .attr("font-size", "10px")
+                            .attr("fill", "gray")
+                            .attr("opacity", 0);
+
+                }
+
+                function drawBubble(e, dataset2) {
+
+
+                    var bubble0 = gB.selectAll(".cir")
+                            .data(dataset2, function (d) { return d.id; })
+
+
+
+                    bubble0.enter().append("circle")
+                            .attr("class", "cir")
+                            .attr("id", function (d) { return d.id; })
+                            .attr("cx", function (d) { return xScaleM(projection([d.lng, d.lat])[0]); })
+                            .attr("cy", function (d) { return yScaleM(projection([d.lng, d.lat])[1]); }) // enter() 이전에 있는 이 두개는 기존에 뿌려져 있던 원들을 업데이트 하는 것.;
+                            .attr("r", 2 * Math.pow(zoomParameter, 0.4))
+                            .style("fill", function (d) { return circleColor(d.price); })
+                            .style("opacity", 0.5)
+                            .style("stroke", "#000000")
+                            .style("stroke-width", 1)
+                            .style("stroke-opacity", 0.8)
+                            .on("mouseover", mouseoverM)
+                            .on("mouseout", mouseoutM)
+
+                    ;
+
+                    bubble0.exit().remove();
+
+
+
+                }
+
+                function circleColor(d) {
+
+                    var flColor;
+
+                    switch (Math.floor((d / 10000))) { //색깔 분배 계산
+
+                        case 1:
+                            flColor = '#00ff00';
+                            break;
+                        case 2:
+                            flColor = '#80ff00';
+                            break;
+                        case 3:
+                            flColor = '#ffff00';
+                            break;
+                        case 4:
+                            flColor = '#ffba00';
+                            break;
+                        case 5:
+                            flColor = '#ff8000';
+                            break;
+                        case 6:
+                            flColor = '#ff0000';
+                            break;
+                        case 7:
+                            flColor = '#8000ff';
+                            break;
+                        case 8:
+                            flColor = '#0000ff';
+                            break;
+                        default:
+                            flColor = '#000000';
+                    }
+
+                    return flColor;
+                }
+
+
+                function mouseoverE(d) {
+
+                    d3.select(this)
+                        .attr("r", 5)
+                    .attr("opacity", 0.8);
+
+                    gB.selectAll(".cir").filter(function (f) {
+                        if (d.id == f.id) return true;
+                        else false;
+                    })
+                        .attr("r", 10 * Math.pow(zoomParameter, 0.2));
+                    showText(d);
+                }
+
+                function mouseoutE(d) {
+                    d3.select(this)
+                        .attr("r", 2)
+                    .attr("opacity", 0.1);
+
+                    gB.selectAll(".cir").filter(function (f) {
+                        if (d.id == f.id) return true;
+                        else false;
+                    })
+                        .attr("r", 2 * Math.pow(zoomParameter, 0.4));
+                    hideText();
+                }
+
+                function mouseoverM(d) {
+
+                    d3.select(this)
+                        .attr("r", 10 * Math.pow(zoomParameter, 0.2))
+                    .attr("opacity", 0.8)
+                    ;
+
+                    gE.selectAll(".cirE").filter(function (f) {
+                        if (d.id == f.id) return true;
+                        else false;
+                    })
+                        .attr("r", 10)
+                        .attr("stroke-opacity", 1);
+                    showText(d);
+                }
+
+                function mouseoutM(d) {
+                    d3.select(this)
+                        .attr("r", 2 * Math.pow(zoomParameter, 0.4))
+                    .attr("opacity", 0.1);
+
+                    gE.selectAll(".cirE").filter(function (f) {
+                        if (d.id == f.id) return true;
+                        else false;
+                    })
+                        .attr("r", 2)
+                        .attr("stroke-opacity", 0.4);
+                    hideText();
+                }
+
+                function brushstart(d) {
+                }
+
+                function brushed() {
+
+                    var e = brush.extent();
+                    svg.selectAll(".miniMap").classed("selected", function (d) {
+                        return (e[0][0] <= d.price && d.price <= e[1][0]   //e[0][0] 등은 각각 브러쉬의 한계범위점들
+                            && e[0][1] <= d.size && d.size <= e[1][1]);
+
+                    });
+
+                    var dataset2 = new Array();
+
+                    for (var i = 0 ; i < data.length ; i++) {
+                        var datum = data[i];
+
+                        if (e[0][0] <= datum.price && datum.price <= e[1][0]
+                                && e[0][1] <= datum.size && datum.size <= e[1][1]) {
+                            dataset2.push(datum);
+
+                        }
+
+                    }
+
+                    drawEnlargedGraph(e, dataset2);
+                    drawBubble(e, dataset2);
+                    drawInfo(e, dataset2.length);
+                    updateUserInput(e);
+
+
+                    //축 줌 다시 리프레쉬
+                    svgE.select(".x.axisE").call(zoomerX);
+                    svgE.select(".y.axisE").call(zoomerY);
+                    svgE.select(".xyDummy").call(zoomerXY);
+                    svgE.selectAll(".cirE").call(zoomerXY);
+
+
+
+                };
+                function brushend() {
+
+                }
+
+                function showText(d) {
+
+                    gET
+                        .text(d.size + "% | " + ukwon(d.price) + "  |  " + d.gu + " " + d.name)
+                        .attr("x", 10)
+                        .attr("y", hE - 5)
+                        .attr("font-family", "맑은 고딕")
+                        .attr("font-size", "20px")
+                        .attr("fill", "black");
+
+                    var tX = xScaleM(projection([d.lng, d.lat])[0]);
+                    var tY = yScaleM(projection([d.lng, d.lat])[1]);
+
+                    gMT
+                        .text(d.size + "% | " + ukwon(d.price) + "  |  " + d.gu + " " + d.name)
+                        .attr("x", tX)
+                        .attr("y", tY)
+                        .attr("font-family", "맑은 고딕")
+                        .attr("text-anchor", function () {
+                            if (tX < (wM / 2)) return "start";
+                            else return "end";
+                        })
+                        .attr("font-size", 1 + "em")
+                        .attr("fill", "black");
+                }
+
+                function hideText() {
+                    gET.text("");
+                    gMT.text("");
+                }
+
+                function drawInfo(e, length) {
+
+                    gT1.text(e[0][1].toFixed(1) + "~" + e[1][1].toFixed(1) + "%  |  " + ukwon(e[0][0].toFixed(0)) + "~" + ukwon(e[1][0].toFixed(0)))
+                        .attr("x", wS - 10)
+                        .attr("y", hS - 85)
+                        .attr("font-family", "맑은 고딕")
+                        .attr("font-size", "15px")
+                        .attr("fill", "black")
+                        .attr("text-anchor", "end");
+
+                    gT2.text((length / data.length * 100).toFixed(2) + "%")
+                        .attr("x", wS - 10)
+                        .attr("y", hS - 105)
+                        .attr("font-family", "맑은 고딕")
+                        .attr("font-size", "40px")
+
+                        .attr("font-weight", "bold")
+                        .attr("fill", "#a0a0a0")
+                        .attr("text-anchor", "end");
+
+                    gTP.attr("d", function (d) {
+                        var Xs = xScale(e[1][0]);
+                        var Ys = yScale((e[1][1] + e[0][1]) / 2);
+                        var Xt = wS - 100;
+                        var Yt = hS - 140;
+                        var R = 5;
+                        var xx = (Xs + Xt) / 2;
+                        var yy = (Ys + Yt) / 2 - 20;
+                        var linkData = [{ x: Xs, y: Ys }, { x: xx, y: yy }, { x: Xt, y: Yt }];
+
+                        var line = d3.svg.line()
+                            .interpolate("cardinal")
+                            .tension(0.2)
+                            .x(function (d) { return d.x; })
+                            .y(function (d) { return d.y; })
+                        ;
+                        return line(linkData);
+
+                    })
+                        .style("stroke", "steelblue")
+                        .style("stroke-width", 1)
+                        .style("stroke-opacity", 0.5)
+                        .attr("fill", "none")
+                    ;
+
+                    gTC.attr("cx", xScale(e[1][0]))
+                            .attr("cy", yScale((e[1][1] + e[0][1]) / 2))
+                            .attr("r", 4)
+                            .attr("opacity", 0.5)
+                            .attr("fill", "steelblue")
+                    ;
+                }
+
+
+                function ukwon(v) {
+
+                    var uk = Math.floor(v / 10000);
+                    var ukText = (uk == 0) ? "" : uk + "억";
+                    var manwon = (Math.floor((v - uk * 10000) / 10000) == (v - uk * 10000) / 10000) ? "원" : (v - uk * 10000) + "만원";
+
+                    if ((ukText + manwon) == "원") return "0원";
+                    else return ukText + manwon;
+                }
+
+
+                function updateValueAreaMin(value) {
+                    var e = brush.extent();
+                    if (value >= e[1][1]) {
+                        e[0][1] = e[1][1] - 1;
+                    } else if (value < 0) {
+                        e[0][1] = 0;
+                    } else {
+                        e[0][1] = value;
+                    }
+                    document.getElementById("area_min").value = Number(e[0][1]).toFixed(1);
+                    updateBrush(e);
+                }
+
+                function updateValueAreaMax(value) {
+                    var e = brush.extent();
+                    var areaMax = d3.max(data, function (d) { return d.size; });
+                    if (value <= e[0][1]) {
+                        e[1][1] = e[0][1] + 1;
+                    } else if (value > areaMax) {
+                        e[1][1] = areaMax;
+                    } else {
+                        e[1][1] = value;
+                    }
+                    document.getElementById("area_max").value = Number(e[1][1]).toFixed(1);
+                    updateBrush(e);
+                }
+
+                function updateValuePriceMin(value) {
+                    var e = brush.extent();
+                    if (value >= e[1][0]) {
+                        e[0][0] = e[1][0] - 1000;
+                    } else if (value < 0) {
+                        e[0][0] = 0;
+                    } else {
+                        e[0][0] = value;
+                    }
+                    document.getElementById("price_min").value = Number(e[0][0]).toFixed(0);
+                    updateBrush(e);
+                }
+
+                function updateValuePriceMax(value) {
+                    var e = brush.extent();
+                    var priceMax = d3.max(data, function (d) { return d.price; });
+                    if (value <= e[0][0]) {
+                        e[1][0] = e[0][0] + 1000;
+                    } else if (value > priceMax) {
+                        e[1][0] = priceMax;
+                    } else {
+                        e[1][0] = value;
+                    }
+                    document.getElementById("price_max").value = Number(e[1][0]).toFixed(0);
+                    updateBrush(e);
+                }
+
+                function updateBrush(e) {
+
+                    svg.select(".brush")
+                            .call(brush.extent([[Number(e[0][0]), Number(e[0][1])], [Number(e[1][0]), Number(e[1][1])]]))
+                            .call(brush.event);
+                }
+
+                function updateUserInput(e) {
+                    document.getElementById("area_min").value = Number(e[0][1]).toFixed(1);
+                    document.getElementById("area_max").value = Number(e[1][1]).toFixed(1);
+                    document.getElementById("price_min").value = Number(e[0][0]).toFixed(0);
+                    document.getElementById("price_max").value = Number(e[1][0]).toFixed(0);
+                }
+
+
+                var showGu = false;
+                function toggleGu() {
+
+                    if (showGu) {
+
+                        gMG.selectAll(".guName")
+                            .attr("opacity", 0);
+
+                        showGu = false;
+                    } else {
+
+                        gMG.selectAll(".guName")
+
+                            .attr("opacity", 1);
+
+                        showGu = true;
+                    }
+
+
+                }
+
+                document.getElementById("area_min").onchange = function () { updateValueAreaMin(this.value); };
+                document.getElementById("area_max").onchange = function () { updateValueAreaMax(this.value); };
+                document.getElementById("price_min").onchange = function () { updateValuePriceMin(this.value); };
+                document.getElementById("price_max").onchange = function () { updateValuePriceMax(this.value); };
+                document.getElementById("toggleGu").onclick = function () { toggleGu(); };
+
+            }
+		</script>
+	</head>
+	<body>
+        <header id="main_header">
+        <div id="title">
+        <txt>2021년 보궐선거 서울 오세훈 득표율</txt>
+        </div>
+        <div id="subtitle">
+            <txt>득표율 | 아파트 매매가평균 | 행정동</txt>
+        </div>
+        
+            <span class="toggleGu" >
+                    <input id="toggleGu" type="button" value="구 이름" />
+        </span>
+            
+        </header>
+    <div id="wrap_middle">
+
+        <section id="map">
+
+        </section>
+
+
+        <aside id="right_aside">
+            <div id="enlargedMap">
+                    
+             </div>
+            <div id="miniMap">
+                 <div class="control_input">
+                        <input id="area_min" style="width :50px" step="1" type="number"  />
+                        <txt>~</txt>
+                        <input id="area_max" style="width :50px" step="1" type="number"  />
+                        <txt>%  |  </txt>
+                        <input id="price_min" style="width :65px" step="1000" type="number"  />
+                        <txt>만원~</txt>
+                        <input id="price_max" style="width :65px" step="1000" type="number"  />
+                        <txt>만원</txt>
+                  </div>
+                    
+             </div>
+            
+        </aside>
+
+    </div>
+    
+
+		
+	</body>
+</html>
