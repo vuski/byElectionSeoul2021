@@ -145,7 +145,7 @@
                 stroke-width : 0.5px;
 		    }
 		    .borderGu {
-		        fill: #e0ebcb;
+		        fill: #b0bec0;
 		        stroke: white;
 		    }
             .borderSi {
@@ -172,6 +172,11 @@
                 var padding = 30;
                 //console.log(w+","+h);
 
+                var DOT_MAP_NORMAL = 5;
+                var DOT_MAP_BIG = 13;
+
+                var DOT_GRAPH_NORMAL = 5;
+                var DOT_GRAPH_BIG = 13;
 
                 var arrayIndicator = 0;
 
@@ -274,7 +279,7 @@
                     gB.selectAll(".cir")
                         .attr("cx", function (d) { return xScaleM(projection([d.lng, d.lat])[0]); })
                         .attr("cy", function (d) { return yScaleM(projection([d.lng, d.lat])[1]); })
-                        .attr("r", 2 * Math.pow(zoomParameter, 0.4));
+                        .attr("r", DOT_MAP_NORMAL * Math.pow(zoomParameter, 0.4));
                     gMG.selectAll(".guName")
                         .attr("x", function (d) {
                             return xScaleM(projection([(d.bbox[0] + d.bbox[2]) / 2, (d.bbox[1] + d.bbox[3]) / 2])[0] - 20);
@@ -440,7 +445,7 @@
                     .on("brushend", brushend);
 
                 //사용자 입력이 먼저 되는 경우를 고려하여 extent입력해둔다.
-                brush.extent([[priceMax * 0.1, sizeMax * 0.2], [priceMax * 0.2, sizeMax * 0.4]]);
+                brush.extent([[priceMax * 0.3, sizeMax * 0.5], [priceMax * 0.4, sizeMax * 0.7]]);
                 brushed();
 
                 //브러쉬를 나중에 그려야 화면에서 draw-order이 가장 위에 그려진다.
@@ -481,7 +486,7 @@
                        })
                        .attr("r", 2)
                         .attr("opacity", 0.6)
-                    .style("fill", function (d) { return circleColor(d.price); });
+                    .style("fill", function (d) { return circleColor(d.size); });
                     ;
 
 
@@ -612,9 +617,9 @@
                        .attr("cy", function (d) {
                            return yScaleE(d.size);
                        })
-                       .attr("r", 2)
+                       .attr("r", DOT_GRAPH_NORMAL)
                         .attr("opacity", 0.6)
-                        .attr("fill", function (d) { return circleColor(d.price); })
+                        .attr("fill", function (d) { return circleColor(d.size); })
                         .attr("stroke-opacity", 0.4)
                         .on("mouseover", mouseoverE)
                         .on("mouseout", mouseoutE)
@@ -689,8 +694,8 @@
                             .attr("id", function (d) { return d.id; })
                             .attr("cx", function (d) { return xScaleM(projection([d.lng, d.lat])[0]); })
                             .attr("cy", function (d) { return yScaleM(projection([d.lng, d.lat])[1]); }) // enter() 이전에 있는 이 두개는 기존에 뿌려져 있던 원들을 업데이트 하는 것.;
-                            .attr("r", 2 * Math.pow(zoomParameter, 0.4))
-                            .style("fill", function (d) { return circleColor(d.price); })
+                            .attr("r", DOT_MAP_NORMAL * Math.pow(zoomParameter, 0.4))
+                            .style("fill", function (d) { return circleColor(d.size); })
                             .style("opacity", 0.5)
                             .style("stroke", "#000000")
                             .style("stroke-width", 1)
@@ -708,6 +713,13 @@
 
                 function circleColor(d) {
 
+                    var flColor = ['#80ff00', '#ffff00', '#ffba00', 
+                    '#ff8000', '#ff0000', '#8000ff', '#0000ff', '#000000' ];
+                    
+                    var idx = parseInt((d-44)/5);
+                    if (idx>7) idx = 7;
+                    return flColor[idx];
+                    /*
                     var flColor;
 
                     switch (Math.floor((d / 10000))) { //색깔 분배 계산
@@ -741,40 +753,41 @@
                     }
 
                     return flColor;
+                    */
                 }
 
 
                 function mouseoverE(d) {
 
                     d3.select(this)
-                        .attr("r", 5)
+                        .attr("r", DOT_GRAPH_BIG * Math.pow(zoomParameter, 0.4))
                     .attr("opacity", 0.8);
 
                     gB.selectAll(".cir").filter(function (f) {
                         if (d.id == f.id) return true;
                         else false;
                     })
-                        .attr("r", 10 * Math.pow(zoomParameter, 0.2));
+                        .attr("r", DOT_GRAPH_BIG * Math.pow(zoomParameter, 0.4));
                     showText(d);
                 }
 
                 function mouseoutE(d) {
                     d3.select(this)
-                        .attr("r", 2)
+                        .attr("r", DOT_GRAPH_NORMAL * Math.pow(zoomParameter, 0.4))
                     .attr("opacity", 0.6);
 
                     gB.selectAll(".cir").filter(function (f) {
                         if (d.id == f.id) return true;
                         else false;
                     })
-                        .attr("r", 2 * Math.pow(zoomParameter, 0.4));
+                        .attr("r", DOT_GRAPH_NORMAL * Math.pow(zoomParameter, 0.4));
                     hideText();
                 }
 
                 function mouseoverM(d) {
 
                     d3.select(this)
-                        .attr("r", 10 * Math.pow(zoomParameter, 0.2))
+                        .attr("r", DOT_MAP_BIG * Math.pow(zoomParameter, 0.4))
                     .attr("opacity", 0.8)
                     ;
 
@@ -782,21 +795,21 @@
                         if (d.id == f.id) return true;
                         else false;
                     })
-                        .attr("r", 10)
+                        .attr("r", DOT_MAP_BIG * Math.pow(zoomParameter, 0.4))
                         .attr("stroke-opacity", 1);
                     showText(d);
                 }
 
                 function mouseoutM(d) {
                     d3.select(this)
-                        .attr("r", 2 * Math.pow(zoomParameter, 0.4))
+                        .attr("r", DOT_MAP_NORMAL * Math.pow(zoomParameter, 0.4))
                     .attr("opacity", 0.6);
 
                     gE.selectAll(".cirE").filter(function (f) {
                         if (d.id == f.id) return true;
                         else false;
                     })
-                        .attr("r", 2)
+                        .attr("r", DOT_MAP_NORMAL * Math.pow(zoomParameter, 0.4))
                         .attr("stroke-opacity", 0.4);
                     hideText();
                 }
